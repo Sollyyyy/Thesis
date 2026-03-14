@@ -1,14 +1,15 @@
+import subprocess
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+import json
 
-class Fruit(BaseModel):
-    name : str
-
-class Fruits(BaseModel):
-    fruits: List[Fruit]
+class TripSearch(BaseModel):
+    departure: str
+    destination: str
+    departDate: str
+    returnDate: str
 
 
 app = FastAPI()
@@ -25,17 +26,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-memory_db = {"fruits": []}
+@app.post('/api/search')
+async def search_trips(trip: TripSearch):
+    try:
+        result = subprocess.run(
+            ["python", "scraping.py",
+             trip.departure,
+             trip.destination,
+             trip.departDate,
+             trip.returnDate],
+            capture_output=True,
+            text=True,
+            cwd="/home/esolzey/repos/thesis/backend2.0"
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            return data
+        else:
+            return {"success": False, "error": result.stderr}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
-@app.get("/fruits", response_model=Fruits)
-def get_fruits():
-    return Fruits(fruits=memory_db["fruits"])
-
-@app.post("/fruits")
-def add_fruit(fruit: Fruit):
-    memory_db["fruits"].append(fruit)
-    return fruit
-    
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
