@@ -35,8 +35,6 @@ def get_price_list(data):
                 price = option['price']['amount']
                 link = 'https://www.skyscanner.net' + option['items'][0]['url']
             except KeyError:
-                print("Price not found for this option.")
-                print('https://www.skyscanner.net' + (option['items'][0]['url']).split('|')[0])
                 continue
             results.append({
                 "agent": agent_name,

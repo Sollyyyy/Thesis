@@ -1,9 +1,10 @@
 import subprocess
-import uvicorn
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
+
 
 class TripSearch(BaseModel):
     departure: str
@@ -30,7 +31,7 @@ app.add_middleware(
 async def search_trips(trip: TripSearch):
     try:
         result = subprocess.run(
-            ["python", "scraping.py",
+            [sys.executable, "scraping.py",
              trip.departure,
              trip.destination,
              trip.departDate,
