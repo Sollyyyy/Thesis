@@ -42,7 +42,7 @@ const AirportSelect = ({ value, onChange, label }) => {
                   onClick={() => { onChange(a.code); setIsOpen(false); setQuery(''); }}
                 >
                   <span className="airport-code">{a.code}</span>
-                  <span className="airport-detail">{a.city} - {a.name}</span>
+                  <span className="airport-detail">{a.city} - {a.name} ({a.country})</span>
                 </li>
               ))
             ) : (

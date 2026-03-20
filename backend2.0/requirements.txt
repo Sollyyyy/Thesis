@@ -2,3 +2,6 @@ fastapi
 uvicorn
 pydantic
 pyjwt
+argon2-cffi
+aiosqlite
+databases

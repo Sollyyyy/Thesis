@@ -1,33 +1,108 @@
-.app {
+/* Layout */
+.app-layout {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.app-layout.fade-out {
+  animation: fadeOut 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.main-content {
+  flex: 1;
+  background: #f5f6fa;
+}
+
+/* Hero */
+.hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: white;
 }
 
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-h1 {
-  color: #333;
+.hero h1 {
   margin: 0 0 0.5rem 0;
-  font-size: 2.5rem;
-  text-align: center;
+  font-size: 2.8rem;
 }
 
-.subtitle {
+.hero p {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Search Section */
+.search-section {
+  max-width: 900px;
+  margin: -2rem auto 2rem;
+  padding: 0 2rem;
+}
+
+.transport-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  background: rgba(255, 255, 255, 0.6);
   color: #666;
-  text-align: center;
-  margin: 0 0 2rem 0;
-  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+  border-bottom: 3px solid transparent;
+  margin-top: 0;
+}
+
+.tab:first-child {
+  border-radius: 16px 0 0 0;
+}
+
+.tab:last-child {
+  border-radius: 0 16px 0 0;
+}
+
+.tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.85);
+  color: #444;
+  transform: none;
+  box-shadow: none;
+}
+
+.tab.active {
+  background: white;
+  color: #667eea;
+  border-bottom: 3px solid #667eea;
+  transform: none;
+  box-shadow: none;
+}
+
+.search-form.tabbed {
+  border-radius: 0 0 16px 16px;
 }
 
 .search-form {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -74,7 +149,6 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  margin-top: 1rem;
 }
 
 button:hover:not(:disabled) {
@@ -87,17 +161,17 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.results {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 8px;
+/* Results Section */
+.results-section {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  padding: 0 2rem;
 }
 
-.results h2 {
-  margin-top: 0;
+.results-section h2 {
   color: #333;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
 }
 
 .error {
@@ -117,17 +191,18 @@ button:disabled {
 .flight-card {
   background: white;
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  gap: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .flight-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .flight-info h3 {
@@ -141,6 +216,13 @@ button:disabled {
   font-weight: bold;
   color: #667eea;
   margin: 0;
+  white-space: nowrap;
+}
+
+.duration {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0 0;
 }
 
 .book-btn {
@@ -157,6 +239,7 @@ button:disabled {
   transform: scale(1.05);
 }
 
+/* Airport Dropdown */
 .airport-select {
   position: relative;
 }
@@ -222,16 +305,27 @@ button:disabled {
   cursor: default !important;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
   }
-  
-  .container {
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .search-section {
+    padding: 0 1rem;
+  }
+
+  .search-form {
     padding: 1.5rem;
   }
-  
-  h1 {
-    font-size: 2rem;
+
+  .flight-card {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
 }

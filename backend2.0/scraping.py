@@ -1,6 +1,8 @@
 import sys
 import json
+import re
 import requests
+import os
 
 
 def get_comparisons(from_city, to_city, departure_date, count_of_people,
@@ -19,16 +21,39 @@ def get_comparisons(from_city, to_city, departure_date, count_of_people,
     return req
 
 
-# Assuming 'data' is your JSON object
+def parse_duration_from_segments(option):
+    """Extract total duration in minutes from segment data in the URL."""
+    try:
+        url = option['items'][0]['url']
+        # Match duration values like |105| or |65| from itinerary segments
+        segments = re.findall(r'flight\|[^&]+', url)
+        total_minutes = 0
+        for seg in segments:
+            parts = seg.split('|')
+            # Duration is typically at index 7 in the segment
+            for part in parts:
+                if part.isdigit() and 10 <= int(part) <= 1500:
+                    total_minutes += int(part)
+                    break
+        return total_minutes if total_minutes > 0 else None
+    except (KeyError, IndexError):
+        return None
+
+
+def format_duration(minutes):
+    if not minutes:
+        return "N/A"
+    hours = minutes // 60
+    mins = minutes % 60
+    return f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
+
+
 def get_price_list(data):
-    # 1. Create a lookup dictionary for agent names
     agent_map = {a['id']: a['name'] for a in data.get('agents', [])}
 
     results = []
-    # 2. Iterate through itineraries to find prices
     for flight in data.get('itineraries', []):
         for option in flight.get('pricing_options', []):
-            # Get the first agent ID for this price point
             agent_id = option['agent_ids'][0]
             agent_name = agent_map.get(agent_id, "Unknown")
             try:
@@ -36,12 +61,16 @@ def get_price_list(data):
                 link = 'https://www.skyscanner.net' + option['items'][0]['url']
             except KeyError:
                 continue
+
+            duration_mins = parse_duration_from_segments(option)
+
             results.append({
                 "agent": agent_name,
                 "price": price,
+                "duration": format_duration(duration_mins),
+                "duration_minutes": duration_mins,
                 "link": link
             })
-    # Sort by price ascending
     return sorted(results, key=lambda x: x['price'])
 
 
@@ -55,16 +84,21 @@ def grab_cmdln_args():
 
 
 def main():
+    # Use data.json for testing
+    data_path = os.path.join(os.path.dirname(__file__), '..', 'data.json')
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+
     command_line_data = grab_cmdln_args()
-    data = get_comparisons(
-        command_line_data["departure_airport"],
-        command_line_data["arrival_airport"],
-        command_line_data["departure_date"],
-        '1', '0', 'Economy', 'EUR',
-        command_line_data["return_date"])
-    price_list = get_price_list(data.json())
-    
-    # Output as JSON for the backend to parse
+    # data = get_comparisons(
+    #     command_line_data["departure_airport"],
+    #     command_line_data["arrival_airport"],
+    #     command_line_data["departure_date"],
+    #     '1', '0', 'Economy', 'EUR',
+    #     command_line_data["return_date"])
+    # price_list = get_price_list(data.json())
+    price_list = get_price_list(data)
+
     result = {
         "success": True,
         "flights": price_list,
@@ -74,7 +108,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # Print the results
-    # with open('../data.json', 'r') as f:
-    #     your_json_data = json.load(f)
     main()
