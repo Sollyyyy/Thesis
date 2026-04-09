@@ -9,7 +9,7 @@ import json
 import jwt
 from datetime import datetime, timedelta
 from argon2 import PasswordHasher
-from database import init_db, get_user, create_user
+from database import init_db, get_user, create_user, get_all_users, delete_user
 
 ph = PasswordHasher()
 
@@ -34,7 +34,9 @@ class UserLogin(BaseModel):
 
 class TripSearch(BaseModel):
     departure: str
+    departureCity: str
     destination: str
+    destinationCity: str
     departDate: str
     returnDate: str
 
@@ -80,6 +82,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+def require_admin(user: dict = Depends(get_current_user)):
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
 @app.post('/api/register')
 async def register(user: UserRegister):
     if get_user(user.username):
@@ -98,7 +106,7 @@ async def login(user: UserLogin):
         ph.verify(db_user["hashed_password"], user.password)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    token = create_access_token({"sub": user.username})
+    token = create_access_token({"sub": user.username, "role": db_user.get("role", "user")})
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -108,29 +116,54 @@ async def profile(user: dict = Depends(get_current_user)):
         "username": user["username"],
         "email": user["email"],
         "full_name": user["full_name"],
+        "role": user.get("role", "user"),
     }
 
 
-@app.post('/api/search')
-async def search_trips(trip: TripSearch):
+# Admin endpoints
+@app.get('/api/admin/users')
+async def admin_get_users(admin: dict = Depends(require_admin)):
+    return get_all_users()
+
+
+@app.delete('/api/admin/users/{username}')
+async def admin_delete_user(username: str, admin: dict = Depends(require_admin)):
+    if username == admin["username"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    target = get_user(username)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    delete_user(username)
+    return {"message": f"User '{username}' deleted"}
+
+
+def run_script(script, args):
     try:
         result = subprocess.run(
-            [sys.executable, "scraping.py",
-             trip.departure,
-             trip.destination,
-             trip.departDate,
-             trip.returnDate],
+            [sys.executable, script] + args,
             capture_output=True,
             text=True,
             cwd="/home/esolzey/repos/thesis/backend2.0"
         )
         if result.returncode == 0:
-            data = json.loads(result.stdout)
-            return data
-        else:
-            return {"success": False, "error": result.stderr}
+            return json.loads(result.stdout)
+        return {"success": False, "error": result.stderr}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+@app.post('/api/search')
+async def search_all(trip: TripSearch):
+    flight = run_script("scraping.py", [
+        trip.departure, trip.destination, trip.departDate, trip.returnDate
+    ])
+    train = run_script("train_scraping.py", [
+        trip.departureCity, trip.destinationCity, trip.departDate
+    ])
+    bus = run_script("bus_scraping.py", [
+        trip.departureCity, trip.destinationCity, trip.departDate
+    ])
+    return {"flight": flight, "bus": bus, "train": train}
 
 
 if __name__ == "__main__":

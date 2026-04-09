@@ -10,7 +10,7 @@ const AirportSelect = ({ value, onChange, label }) => {
     `${a.code} ${a.name} ${a.city} ${a.country}`.toLowerCase().includes(query.toLowerCase())
   );
 
-  const selected = airports.find((a) => a.code === value);
+  const selected = airports.find((a) => a.code === (value?.code || value));
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -38,8 +38,8 @@ const AirportSelect = ({ value, onChange, label }) => {
               filtered.map((a) => (
                 <li
                   key={a.code}
-                  className={a.code === value ? 'selected' : ''}
-                  onClick={() => { onChange(a.code); setIsOpen(false); setQuery(''); }}
+                  className={a.code === value?.code ? 'selected' : ''}
+                  onClick={() => { onChange({ code: a.code, city: a.city }); setIsOpen(false); setQuery(''); }}
                 >
                   <span className="airport-code">{a.code}</span>
                   <span className="airport-detail">{a.city} - {a.name} ({a.country})</span>

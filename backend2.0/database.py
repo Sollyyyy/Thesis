@@ -18,9 +18,15 @@ def init_db():
             username TEXT UNIQUE NOT NULL,
             email TEXT NOT NULL,
             full_name TEXT NOT NULL,
-            hashed_password TEXT NOT NULL
+            hashed_password TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user'
         )
     """)
+    # Add role column if upgrading from old schema
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -32,12 +38,12 @@ def get_user(username: str):
     return dict(user) if user else None
 
 
-def create_user(username: str, email: str, full_name: str, hashed_password: str):
+def create_user(username: str, email: str, full_name: str, hashed_password: str, role: str = "user"):
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO users (username, email, full_name, hashed_password) VALUES (?, ?, ?, ?)",
-            (username, email, full_name, hashed_password)
+            "INSERT INTO users (username, email, full_name, hashed_password, role) VALUES (?, ?, ?, ?, ?)",
+            (username, email, full_name, hashed_password, role)
         )
         conn.commit()
         return True
@@ -45,3 +51,17 @@ def create_user(username: str, email: str, full_name: str, hashed_password: str)
         return False
     finally:
         conn.close()
+
+
+def get_all_users():
+    conn = get_connection()
+    users = conn.execute("SELECT id, username, email, full_name, role FROM users").fetchall()
+    conn.close()
+    return [dict(u) for u in users]
+
+
+def delete_user(username: str):
+    conn = get_connection()
+    conn.execute("DELETE FROM users WHERE username = ?", (username,))
+    conn.commit()
+    conn.close()

@@ -41,6 +41,15 @@
   color: #667eea;
 }
 
+.nav-admin {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.nav-admin:hover {
+  color: #1b5e20;
+}
+
 .nav-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;

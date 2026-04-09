@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import './Navbar.css';
 
-const Navbar = ({ isLoggedIn, onLogout, loggingOut }) => {
+const Navbar = ({ isLoggedIn, isAdmin, onLogout, loggingOut }) => {
   return (
     <nav className="navbar">
       <div className="nav-content">
@@ -10,6 +10,7 @@ const Navbar = ({ isLoggedIn, onLogout, loggingOut }) => {
           <Link to="/" className="nav-item">Search</Link>
           {isLoggedIn ? (
             <>
+              {isAdmin && <Link to="/admin" className="nav-item nav-admin">Admin</Link>}
               <Link to="/profile" className="nav-item">Profile</Link>
               <button className="nav-logout" onClick={onLogout} disabled={loggingOut}>
                 {loggingOut ? 'Logging out...' : 'Logout'}
