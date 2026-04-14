@@ -80,6 +80,47 @@
   font-size: 0.9rem;
 }
 
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.history-route {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.history-city {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.history-arrow {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.history-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.history-time {
+  color: #aaa;
+}
+
 .profile-error {
   background: #fee;
   color: #c33;

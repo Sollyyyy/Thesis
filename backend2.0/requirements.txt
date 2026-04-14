@@ -1,7 +1,7 @@
-fastapi
-uvicorn
-pydantic
-pyjwt
-argon2-cffi
-aiosqlite
-databases
+fastapi==0.135.1
+uvicorn==0.41.0
+pydantic==2.12.5
+PyJWT==2.12.1
+argon2-cffi==25.1.0
+requests==2.32.3
+playwright==1.58.0

@@ -31,7 +31,7 @@
 
 .table-header {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 80px;
+  grid-template-columns: 2fr 2fr 1fr 140px;
   gap: 1rem;
   padding: 0.75rem 1rem;
   font-weight: 600;
@@ -42,7 +42,7 @@
 
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 80px;
+  grid-template-columns: 2fr 2fr 1fr 140px;
   gap: 1rem;
   padding: 1rem;
   align-items: center;
@@ -127,6 +127,59 @@
   background: #cc0000;
   transform: none;
   box-shadow: none;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.history-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.history-btn:hover {
+  background: #5568d3;
+  transform: none;
+  box-shadow: none;
+}
+
+.user-history {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: #555;
+  border-bottom: 1px solid #eee;
+}
+
+.history-row:last-child {
+  border-bottom: none;
+}
+
+.history-date {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.no-history {
+  color: #aaa;
+  font-style: italic;
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 .delete-placeholder {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
+import API_BASE from '../config';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -16,7 +17,7 @@ const Register = () => {
     setError('');
     setSuccess('');
     try {
-      const response = await fetch('http://localhost:8000/api/register', {
+      const response = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, full_name: fullName, password })

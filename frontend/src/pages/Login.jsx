@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
+import API_BASE from '../config';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
+      const response = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

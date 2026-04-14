@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend2.0
+    container_name: tripplanner-backend
+    network_mode: host
+    volumes:
+      - ./backend2.0/users.db:/app/users.db
+
+  frontend:
+    build: ./frontend
+    container_name: tripplanner-frontend
+    network_mode: host
+    depends_on:
+      - backend

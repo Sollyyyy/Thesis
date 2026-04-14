@@ -7,10 +7,12 @@ import os
 
 def get_comparisons(from_city, to_city, departure_date, count_of_people,
                     count_of_kids, cabin_class, currency, returning_date=None):
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'}
     req = requests.get(f'https://api.flightapi.io/onewaytrip/'
-                       f'69b435d24767f41cdba06331/{from_city}/{to_city}/'
+                       f'69b44b1ad2b34942323b9882/{from_city}/{to_city}/'
                        f'{departure_date}/{count_of_people}/'
-                       f'{count_of_kids}/0/{cabin_class}/{currency}')
+                       f'{count_of_kids}/0/{cabin_class}/{currency}',
+                       headers=headers, timeout=30)
     # For a round trip
     # if returning_date:
     #     req = requests.get(f'https://api.flightapi.io/roundtrip/'
@@ -75,35 +77,38 @@ def get_price_list(data):
 
 
 def grab_cmdln_args():
-    command_line_data = {}
-    command_line_data["departure_airport"] = str(sys.argv[1])
-    command_line_data["arrival_airport"] = sys.argv[2]
-    command_line_data["departure_date"] = sys.argv[3]
-    command_line_data["return_date"] = sys.argv[4] if len(sys.argv) > 4 else None
-    return command_line_data
+    cmd_line_data = {}
+    cmd_line_data["departure_airport"] = str(sys.argv[1])
+    cmd_line_data["arrival_airport"] = sys.argv[2]
+    cmd_line_data["departure_date"] = sys.argv[3]
+    cmd_line_data["return_date"] = sys.argv[4] if len(sys.argv) > 4 else None
+    return cmd_line_data
 
 
 def main():
-    # Use data.json for testing
-    data_path = os.path.join(os.path.dirname(__file__), '..', 'data.json')
-    with open(data_path, 'r') as f:
-        data = json.load(f)
-
     command_line_data = grab_cmdln_args()
-    # data = get_comparisons(
-    #     command_line_data["departure_airport"],
-    #     command_line_data["arrival_airport"],
-    #     command_line_data["departure_date"],
-    #     '1', '0', 'Economy', 'EUR',
-    #     command_line_data["return_date"])
-    # price_list = get_price_list(data.json())
-    price_list = get_price_list(data)
+    try:
+        response = get_comparisons(
+            command_line_data["departure_airport"],
+            command_line_data["arrival_airport"],
+            command_line_data["departure_date"],
+            '1', '0', 'Economy', 'EUR',
+            command_line_data["return_date"])
+        response.raise_for_status()
+        data = response.json()
+        price_list = get_price_list(data)
 
-    result = {
-        "success": True,
-        "flights": price_list,
-        "search_params": command_line_data
-    }
+        result = {
+            "success": True,
+            "flights": price_list,
+            "search_params": command_line_data
+        }
+    except Exception as e:
+        result = {
+            "success": False,
+            "error": str(e),
+            "flights": []
+        }
     print(json.dumps(result))
 
 

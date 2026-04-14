@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
+import API_BASE from './config';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AirportSelect from './components/AirportSelect';
@@ -44,14 +45,37 @@ const Search = () => {
     return items;
   };
 
+  const getSummary = () => {
+    const parseDur = (d) => {
+      if (!d || d === 'N/A') return 9999;
+      const h = parseInt(d.match(/(\d+)h/)?.[1] || '0');
+      const m = parseInt(d.match(/(\d+)m/)?.[1] || '0');
+      return h * 60 + m;
+    };
+    const summary = {};
+    for (const key of ['flight', 'bus', 'train']) {
+      const data = results[key];
+      if (!data || !data.items || data.items.length === 0) { summary[key] = null; continue; }
+      const items = data.items;
+      const withPrice = items.filter(i => i.price);
+      const cheapest = withPrice.length > 0 ? withPrice.reduce((a, b) => a.price < b.price ? a : b) : null;
+      const fastest = items.reduce((a, b) => parseDur(a.duration) < parseDur(b.duration) ? a : b);
+      summary[key] = { cheapest, fastest, count: items.length };
+    }
+    return summary;
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
     if (!departure || !destination) return setLoading(false);
     try {
-      const response = await fetch('http://localhost:8000/api/search', {
+      const token = localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await fetch(`${API_BASE}/search`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           departure: departure.code,
           departureCity: departure.city,
@@ -152,6 +176,32 @@ const Search = () => {
             >
               🚆 Trains
             </button>
+          </div>
+
+          <div className="comparison-summary">
+            {[{key: 'flight', icon: '✈️', label: 'Flight'}, {key: 'bus', icon: '🚌', label: 'Bus'}, {key: 'train', icon: '🚆', label: 'Train'}].map(({key, icon, label}) => {
+              const s = getSummary()[key];
+              return (
+                <div key={key} className={`summary-card ${mode === key ? 'active' : ''}`} onClick={() => setMode(key)}>
+                  <div className="summary-header">{icon} {label}</div>
+                  {s ? (
+                    <>
+                      <div className="summary-stat">
+                        <span className="stat-label">💰 From</span>
+                        <span className="stat-value">{s.cheapest ? `${s.cheapest.price} EUR` : 'N/A'}</span>
+                      </div>
+                      <div className="summary-stat">
+                        <span className="stat-label">⚡ Fastest</span>
+                        <span className="stat-value">{s.fastest?.duration || 'N/A'}</span>
+                      </div>
+                      <div className="summary-count">{s.count} results</div>
+                    </>
+                  ) : (
+                    <div className="summary-na">No results</div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {results[mode] && (

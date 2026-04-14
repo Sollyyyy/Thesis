@@ -9,7 +9,7 @@ import json
 import jwt
 from datetime import datetime, timedelta
 from argon2 import PasswordHasher
-from database import init_db, get_user, create_user, get_all_users, delete_user
+from database import init_db, get_user, create_user, get_all_users, delete_user, save_search, get_search_history
 
 ph = PasswordHasher()
 
@@ -57,6 +57,7 @@ app.add_middleware(
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
 
 
 def create_access_token(data: dict):
@@ -80,6 +81,19 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def get_current_user_optional(token: str = Depends(oauth2_scheme_optional)):
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username:
+            return get_user(username)
+    except Exception:
+        pass
+    return None
 
 
 def require_admin(user: dict = Depends(get_current_user)):
@@ -153,7 +167,9 @@ def run_script(script, args):
 
 
 @app.post('/api/search')
-async def search_all(trip: TripSearch):
+async def search_all(trip: TripSearch, user: dict = Depends(get_current_user_optional)):
+    if user:
+        save_search(user["username"], trip.departureCity, trip.destinationCity, trip.departDate, trip.returnDate)
     flight = run_script("scraping.py", [
         trip.departure, trip.destination, trip.departDate, trip.returnDate
     ])
@@ -164,6 +180,16 @@ async def search_all(trip: TripSearch):
         trip.departureCity, trip.destinationCity, trip.departDate
     ])
     return {"flight": flight, "bus": bus, "train": train}
+
+
+@app.get('/api/history')
+async def get_history(user: dict = Depends(get_current_user)):
+    return get_search_history(user["username"])
+
+
+@app.get('/api/admin/history/{username}')
+async def admin_get_history(username: str, admin: dict = Depends(require_admin)):
+    return get_search_history(username)
 
 
 if __name__ == "__main__":
