@@ -1,1 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Database
+*.db
+
+# Node
+node_modules/
+dist/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright browsers
+.cache/ms-playwright/
+
+# Scripts
 ./scripts/*
+
+# Data
+data.json
