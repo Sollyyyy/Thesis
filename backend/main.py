@@ -3,14 +3,14 @@ import sys
 import os
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 import json
 import jwt
 from datetime import datetime, timedelta
 from argon2 import PasswordHasher
-from database import init_db, get_user, create_user, get_all_users, delete_user, save_search, get_search_history
+from database import (init_db, get_user, create_user, get_all_users,
+                      delete_user, save_search, get_search_history)
 
 ph = PasswordHasher()
 
@@ -39,26 +39,20 @@ class TripSearch(BaseModel):
     destination: str
     destinationCity: str
     departDate: str
-    returnDate: str
+    returnDate: str = ''
 
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:5173"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Load airports data
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                       'airports.json'), 'r') as f:
+    AIRPORTS = json.load(f)
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
-oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/login",
+                                              auto_error=False)
 
 
 def create_access_token(data: dict):
@@ -116,12 +110,15 @@ async def register(user: UserRegister):
 async def login(user: UserLogin):
     db_user = get_user(user.username)
     if not db_user:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401,
+                            detail="Invalid username or password")
     try:
         ph.verify(db_user["hashed_password"], user.password)
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-    token = create_access_token({"sub": user.username, "role": db_user.get("role", "user")})
+        raise HTTPException(status_code=401,
+                            detail="Invalid username or password")
+    token = create_access_token({"sub": user.username,
+                                 "role": db_user.get("role", "user")})
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -135,6 +132,11 @@ async def profile(user: dict = Depends(get_current_user)):
     }
 
 
+@app.get('/api/airports')
+async def get_airports():
+    return AIRPORTS
+
+
 # Admin endpoints
 @app.get('/api/admin/users')
 async def admin_get_users(admin: dict = Depends(require_admin)):
@@ -144,7 +146,8 @@ async def admin_get_users(admin: dict = Depends(require_admin)):
 @app.delete('/api/admin/users/{username}')
 async def admin_delete_user(username: str, admin: dict = Depends(require_admin)):
     if username == admin["username"]:
-        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+        raise HTTPException(status_code=400,
+                            detail="Cannot delete your own account")
     target = get_user(username)
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
@@ -168,9 +171,11 @@ def run_script(script, args):
 
 
 @app.post('/api/search')
-async def search_all(trip: TripSearch, user: dict = Depends(get_current_user_optional)):
+async def search_all(trip: TripSearch,
+                     user: dict = Depends(get_current_user_optional)):
     if user:
-        save_search(user["username"], trip.departureCity, trip.destinationCity, trip.departDate, trip.returnDate)
+        save_search(user["username"], trip.departureCity, trip.destinationCity,
+                    trip.departDate, trip.returnDate)
     flight = run_script("scraping.py", [
         trip.departure, trip.destination, trip.departDate, trip.returnDate
     ])
@@ -180,7 +185,26 @@ async def search_all(trip: TripSearch, user: dict = Depends(get_current_user_opt
     bus = run_script("bus_scraping.py", [
         trip.departureCity, trip.destinationCity, trip.departDate
     ])
-    return {"flight": flight, "bus": bus, "train": train}
+
+    # Round trip: run return searches with swapped cities
+    if trip.returnDate:
+        train_return = run_script("train_scraping.py", [
+            trip.destinationCity, trip.departureCity, trip.returnDate
+        ])
+        bus_return = run_script("bus_scraping.py", [
+            trip.destinationCity, trip.departureCity, trip.returnDate
+        ])
+    else:
+        train_return = None
+        bus_return = None
+
+    return {
+        "flight": flight,
+        "bus": bus,
+        "train": train,
+        "bus_return": bus_return,
+        "train_return": train_return
+    }
 
 
 @app.get('/api/history')

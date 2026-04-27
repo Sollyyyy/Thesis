@@ -3,8 +3,6 @@ __pycache__/
 *.pyc
 venv/
 
-# Database
-*.db
 
 # Node
 node_modules/
@@ -30,3 +28,6 @@ Thumbs.db
 
 # Data
 data.json
+
+# SSL certificates
+certs/

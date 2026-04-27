@@ -4,22 +4,25 @@ import re
 import requests
 import os
 
+SKYSCANNER_API_KEY = '69ea83f0bbc9ceb7d568650b'
+
 
 def get_comparisons(from_city, to_city, departure_date, count_of_people,
                     count_of_kids, cabin_class, currency, returning_date=None):
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'}
-    req = requests.get(f'https://api.flightapi.io/onewaytrip/'
-                       f'69b44b1ad2b34942323b9882/{from_city}/{to_city}/'
-                       f'{departure_date}/{count_of_people}/'
-                       f'{count_of_kids}/0/{cabin_class}/{currency}',
-                       headers=headers, timeout=30)
-    # For a round trip
-    # if returning_date:
-    #     req = requests.get(f'https://api.flightapi.io/roundtrip/'
-    #                        f'69b435d24767f41cdba06331/{from_city}/{to_city}/'
-    #                        f'{departure_date}/{returning_date}/'
-    #                        f'{count_of_people}/0/0/{cabin_class}'
-    #                        f'/{currency}')
+    if returning_date:
+        req = requests.get(f'https://api.flightapi.io/roundtrip/'
+                           f'{SKYSCANNER_API_KEY}/{from_city}/{to_city}/'
+                           f'{departure_date}/{returning_date}/'
+                           f'{count_of_people}/0/0/{cabin_class}'
+                           f'/{currency}',
+                           headers=headers, timeout=30)
+    else:
+        req = requests.get(f'https://api.flightapi.io/onewaytrip/'
+                           f'{SKYSCANNER_API_KEY}/{from_city}/{to_city}/'
+                           f'{departure_date}/{count_of_people}/'
+                           f'{count_of_kids}/0/{cabin_class}/{currency}',
+                           headers=headers, timeout=30)
     return req
 
 

@@ -1,10 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import airports from '../airports';
+import API_BASE from '../config';
 
 const AirportSelect = ({ value, onChange, label }) => {
+  const [airports, setAirports] = useState([]);
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/airports`)
+      .then(res => res.json())
+      .then(setAirports)
+      .catch(() => {});
+  }, []);
 
   const filtered = airports.filter((a) =>
     `${a.code} ${a.name} ${a.city} ${a.country}`.toLowerCase().includes(query.toLowerCase())
@@ -29,7 +37,7 @@ const AirportSelect = ({ value, onChange, label }) => {
           value={isOpen ? query : selected ? `${selected.code} - ${selected.city}` : ''}
           onChange={(e) => { setQuery(e.target.value); setIsOpen(true); }}
           onFocus={() => { setIsOpen(true); setQuery(''); }}
-          placeholder="Search airport..."
+          placeholder="Search for a city"
           required
         />
         {isOpen && (

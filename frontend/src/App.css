@@ -175,6 +175,28 @@
   gap: 1rem;
 }
 
+.trip-type {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #555;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -231,8 +253,44 @@ button:disabled {
 
 .results-section h2 {
   color: #333;
-  margin: 0 0 1rem 0;
+  margin: 0;
   font-size: 1.5rem;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.trip-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #667eea;
+}
+
+.toggle-btn {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.toggle-btn.active {
+  background: #667eea;
+  color: white;
 }
 
 .filter-bar {

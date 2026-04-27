@@ -8,9 +8,13 @@ services:
     volumes:
       - ./backend/users.db:/app/users.db
 
-  frontend:
-    build: ./frontend
-    container_name: tripplanner-frontend
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: tripplanner-gateway
     network_mode: host
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
       - backend

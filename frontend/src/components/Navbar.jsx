@@ -5,7 +5,7 @@ const Navbar = ({ isLoggedIn, isAdmin, onLogout, loggingOut }) => {
   return (
     <nav className="navbar">
       <div className="nav-content">
-        <Link to="/" className="nav-logo">✈ Trip Planner</Link>
+        <Link to="/" className="nav-logo">Trip Planner</Link>
         <div className="nav-links">
           <Link to="/" className="nav-item">Search</Link>
           {isLoggedIn ? (
