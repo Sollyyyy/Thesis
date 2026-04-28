@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 from fastapi import APIRouter, Depends
 from models import TripSearch
 from auth import get_current_user_optional
@@ -25,14 +26,16 @@ async def search_all(trip: TripSearch,
         save_search(user["username"], trip.departureCity, trip.destinationCity,
                     trip.departDate)
 
-    flight = run_script("scraping.py", [
-        trip.departure, trip.destination, trip.departDate
-    ])
-    train = run_script("train_scraping.py", [
-        trip.departureCity, trip.destinationCity, trip.departDate
-    ])
-    bus = run_script("bus_scraping.py", [
-        trip.departureCity, trip.destinationCity, trip.departDate
-    ])
+    flight, train, bus = await asyncio.gather(
+        run_script("scraping.py", [
+            trip.departure, trip.destination, trip.departDate
+        ]),
+        run_script("train_scraping.py", [
+            trip.departureCity, trip.destinationCity, trip.departDate
+        ]),
+        run_script("bus_scraping.py", [
+            trip.departureCity, trip.destinationCity, trip.departDate
+        ])
+    )
 
     return {"flight": flight, "bus": bus, "train": train}
