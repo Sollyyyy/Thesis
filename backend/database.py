@@ -1,65 +1,82 @@
-import sqlite3
-import os
+import pymysql
+import time
 from datetime import datetime
-
-DB_PATH = os.path.join(os.path.dirname(__file__), "users.db")
+from config import (MYSQL_HOST, MYSQL_PORT, MYSQL_USER,
+                    MYSQL_PASSWORD, MYSQL_DATABASE)
 
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return pymysql.connect(
+        host=MYSQL_HOST,
+        port=MYSQL_PORT,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        database=MYSQL_DATABASE,
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=False
+    )
 
 
 def init_db():
-    conn = get_connection()
-    conn.execute("""
+    # Retry connection until MySQL is ready
+    for attempt in range(30):
+        try:
+            conn = get_connection()
+            break
+        except Exception:
+            print(f"Waiting for MySQL... (attempt {attempt + 1})")
+            time.sleep(2)
+    else:
+        raise Exception("Could not connect to MySQL after 30 attempts")
+
+    cur = conn.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT NOT NULL,
-            full_name TEXT NOT NULL,
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(255) UNIQUE NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            full_name VARCHAR(255) NOT NULL,
             hashed_password TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'user'
+            role VARCHAR(50) NOT NULL DEFAULT 'user'
         )
     """)
-    conn.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS search_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            departure TEXT NOT NULL,
-            destination TEXT NOT NULL,
-            depart_date TEXT NOT NULL,
-            return_date TEXT,
-            searched_at TEXT NOT NULL,
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(255) NOT NULL,
+            departure VARCHAR(255) NOT NULL,
+            destination VARCHAR(255) NOT NULL,
+            depart_date VARCHAR(50) NOT NULL,
+            searched_at VARCHAR(50) NOT NULL,
             FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
         )
     """)
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
-    except sqlite3.OperationalError:
-        pass
     conn.commit()
     conn.close()
 
 
 def get_user(username: str):
     conn = get_connection()
-    user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cur.fetchone()
     conn.close()
-    return dict(user) if user else None
+    return user
 
 
-def create_user(username: str, email: str, full_name: str, hashed_password: str, role: str = "user"):
+def create_user(username: str, email: str, full_name: str,
+                hashed_password: str, role: str = "user"):
     conn = get_connection()
+    cur = conn.cursor()
     try:
-        conn.execute(
-            "INSERT INTO users (username, email, full_name, hashed_password, role) VALUES (?, ?, ?, ?, ?)",
+        cur.execute(
+            "INSERT INTO users (username, email, full_name,"
+            " hashed_password, role) VALUES (%s, %s, %s, %s, %s)",
             (username, email, full_name, hashed_password, role)
         )
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except pymysql.IntegrityError:
         return False
     finally:
         conn.close()
@@ -67,24 +84,32 @@ def create_user(username: str, email: str, full_name: str, hashed_password: str,
 
 def get_all_users():
     conn = get_connection()
-    users = conn.execute("SELECT id, username, email, full_name, role FROM users").fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, email, full_name, role FROM users")
+    users = cur.fetchall()
     conn.close()
-    return [dict(u) for u in users]
+    return users
 
 
 def delete_user(username: str):
     conn = get_connection()
-    conn.execute("DELETE FROM search_history WHERE username = ?", (username,))
-    conn.execute("DELETE FROM users WHERE username = ?", (username,))
+    cur = conn.cursor()
+    cur.execute("DELETE FROM search_history WHERE username = %s", (username,))
+    cur.execute("DELETE FROM users WHERE username = %s", (username,))
     conn.commit()
     conn.close()
 
 
-def save_search(username: str, departure: str, destination: str, depart_date: str, return_date: str):
+def save_search(username: str, departure: str, destination: str,
+                depart_date: str):
     conn = get_connection()
-    conn.execute(
-        "INSERT INTO search_history (username, departure, destination, depart_date, return_date, searched_at) VALUES (?, ?, ?, ?, ?, ?)",
-        (username, departure, destination, depart_date, return_date, datetime.now().isoformat())
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO search_history (username, departure, destination,"
+        " depart_date, searched_at) "
+        "VALUES (%s, %s, %s, %s, %s)",
+        (username, departure, destination, depart_date,
+         datetime.now().isoformat())
     )
     conn.commit()
     conn.close()
@@ -92,9 +117,12 @@ def save_search(username: str, departure: str, destination: str, depart_date: st
 
 def get_search_history(username: str, limit: int = 20):
     conn = get_connection()
-    rows = conn.execute(
-        "SELECT * FROM search_history WHERE username = ? ORDER BY searched_at DESC LIMIT ?",
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM search_history WHERE username = %s"
+        " ORDER BY searched_at DESC LIMIT %s",
         (username, limit)
-    ).fetchall()
+    )
+    rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return rows

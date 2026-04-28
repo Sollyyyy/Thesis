@@ -14,18 +14,14 @@ const Search = () => {
   const [departure, setDeparture] = useState(null);
   const [destination, setDestination] = useState(null);
   const [departDate, setDepartDate] = useState('');
-  const [returnDate, setReturnDate] = useState('');
-  const [oneWay, setOneWay] = useState(false);
   const [results, setResults] = useState({ flight: null, bus: null, train: null });
-  const [returnResults, setReturnResults] = useState({ bus: null, train: null });
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState('flight');
-  const [showReturn, setShowReturn] = useState(false);
   const [sortBy, setSortBy] = useState('cheapest');
   const [directOnly, setDirectOnly] = useState(false);
 
   const getFilteredItems = () => {
-    const source = showReturn && mode !== 'flight' ? returnResults : results;
+    const source = results;
     const data = source[mode];
     if (!data || !data.items) return [];
     let items = [...data.items];
@@ -56,10 +52,10 @@ const Search = () => {
       const m = parseInt(d.match(/(\d+)m/)?.[1] || '0');
       return h * 60 + m;
     };
-    const source = showReturn && !oneWay ? returnResults : results;
+    const source = results;
     const summary = {};
     for (const key of ['flight', 'bus', 'train']) {
-      const data = key === 'flight' ? results[key] : source[key];
+      const data = source[key];
       if (!data || !data.items || data.items.length === 0) { summary[key] = null; continue; }
       const items = data.items;
       const withPrice = items.filter(i => i.price);
@@ -86,8 +82,7 @@ const Search = () => {
           departureCity: departure.city,
           destination: destination.code,
           destinationCity: destination.city,
-          departDate,
-          returnDate
+          departDate
         })
       });
       const data = await response.json();
@@ -100,11 +95,6 @@ const Search = () => {
         bus: normalize(data.bus),
         train: normalize(data.train)
       });
-      setReturnResults({
-        bus: normalize(data.bus_return),
-        train: normalize(data.train_return)
-      });
-      setShowReturn(false);
     } catch (error) {
       console.error('Error:', error);
       const err = { success: false, error: error.message };
@@ -129,43 +119,17 @@ const Search = () => {
             <AirportSelect label="Destination" value={destination} onChange={setDestination} />
           </div>
 
-          <div className="trip-type">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={oneWay}
-                onChange={(e) => { setOneWay(e.target.checked); if (e.target.checked) setReturnDate(''); }}
-              />
-              One-way trip
-            </label>
-          </div>
-
           <div className="form-row">
             <div className="form-group">
               <label>Departure Date</label>
               <input
                 type="date"
                 value={departDate}
-                onChange={(e) => {
-                  setDepartDate(e.target.value);
-                  if (returnDate && e.target.value > returnDate) setReturnDate('');
-                }}
+                onChange={(e) => setDepartDate(e.target.value)}
                 min={today}
                 required
               />
             </div>
-            {!oneWay && (
-              <div className="form-group">
-                <label>Return Date</label>
-                <input
-                  type="date"
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                  min={departDate || today}
-                  required
-                />
-              </div>
-            )}
           </div>
 
           <button type="submit" disabled={loading}>
@@ -230,12 +194,6 @@ const Search = () => {
             <section className="results-section">
               <div className="results-header">
                 <h2>{mode === 'flight' ? 'Flight' : mode === 'bus' ? 'Bus' : 'Train'} Results</h2>
-                {!oneWay && returnDate && (
-                  <div className="trip-toggle">
-                    <button type="button" className={`toggle-btn ${!showReturn ? 'active' : ''}`} onClick={() => setShowReturn(false)}>Outbound</button>
-                    <button type="button" className={`toggle-btn ${showReturn ? 'active' : ''}`} onClick={() => setShowReturn(true)}>Return</button>
-                  </div>
-                )}
               </div>
               <div className="filter-bar">
                 <div className="sort-buttons">

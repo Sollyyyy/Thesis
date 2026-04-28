@@ -19,4 +19,3 @@ class TripSearch(BaseModel):
     destination: str
     destinationCity: str
     departDate: str
-    returnDate: str = ''

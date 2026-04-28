@@ -57,7 +57,7 @@ const Profile = () => {
                     <span className="history-city">{h.destination}</span>
                   </div>
                   <div className="history-meta">
-                    <span>{h.depart_date}{h.return_date ? ` — ${h.return_date}` : ''}</span>
+                    <span>{h.depart_date}</span>
                     <span className="history-time">{new Date(h.searched_at).toLocaleDateString()}</span>
                   </div>
                 </div>

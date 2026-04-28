@@ -1,12 +1,31 @@
 version: "3.8"
 
 services:
+  mysql:
+    image: docker.io/library/mysql:8.0
+    container_name: tripplanner-mysql
+    network_mode: host
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: tripplanner
+      MYSQL_USER: tripplanner
+      MYSQL_PASSWORD: tripplanner123
+    volumes:
+      - mysql_data:/var/lib/mysql
+
   backend:
     build: ./backend
     container_name: tripplanner-backend
     network_mode: host
-    volumes:
-      - ./backend/users.db:/app/users.db
+    restart: on-failure
+    environment:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_USER: tripplanner
+      MYSQL_PASSWORD: tripplanner123
+      MYSQL_DATABASE: tripplanner
+    depends_on:
+      - mysql
 
   gateway:
     build:
@@ -18,3 +37,6 @@ services:
       - ./certs:/etc/nginx/certs:ro
     depends_on:
       - backend
+
+volumes:
+  mysql_data:

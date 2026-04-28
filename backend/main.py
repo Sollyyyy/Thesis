@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
-from database import init_db
+from database import init_db, get_user, create_user
+from argon2 import PasswordHasher
 from routes.auth_routes import router as auth_router
 from routes.user_routes import router as user_router
 from routes.search_routes import router as search_router
@@ -8,7 +9,16 @@ from routes.admin_routes import router as admin_router
 
 init_db()
 
-app = FastAPI()
+# Create default admin if not exists
+if not get_user('admin'):
+    ph = PasswordHasher()
+    create_user('admin', 'admin@tripplanner.com', 'Admin', ph.hash('admin123'), 'admin')
+
+app = FastAPI(
+    title="Trip Planner API",
+    description="Compare flights, buses, and trains across Europe and Africa",
+    version="1.0.0"
+)
 
 app.include_router(auth_router)
 app.include_router(user_router)

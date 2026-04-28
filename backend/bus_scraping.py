@@ -2,7 +2,6 @@ import sys
 import json
 import requests
 from datetime import datetime
-from urllib.parse import quote
 
 
 FLIXBUS_API = "https://global.api.flixbus.com"
@@ -10,9 +9,9 @@ FLIXBUS_API = "https://global.api.flixbus.com"
 
 def find_city(city_name):
     try:
-        resp = requests.get(f"{FLIXBUS_API}/search/autocomplete/cities", params={
-            "q": city_name, "lang": "en", "country": "de"
-        }, timeout=10)
+        resp = requests.get(f"{FLIXBUS_API}/search/autocomplete/cities",
+                            params={"q": city_name, "lang": "en",
+                                    "country": "de"}, timeout=10)
         resp.raise_for_status()
         results = resp.json()
         if results:
@@ -58,7 +57,8 @@ def search_trips_playwright(from_id, to_id, flix_date):
 
             def handle_resp(response):
                 nonlocal results, stations
-                if '/search/service/v4/search' in response.url and response.status == 200:
+                if ('/search/service/v4/search' in response.url and
+                        response.status == 200):
                     try:
                         data = response.json()
                         stations = data.get("stations", {})
@@ -88,15 +88,18 @@ def parse_trips(results, stations, from_id, to_id, flix_date):
 
         dep = trip["departure"]["date"]
         arr = trip["arrival"]["date"]
-        dep_station = stations.get(trip["departure"].get("station_id"), {}).get("name", "")
-        arr_station = stations.get(trip["arrival"].get("station_id"), {}).get("name", "")
+        dep_station = stations.get(trip["departure"].get("station_id"),
+                                   {}).get("name", "")
+        arr_station = stations.get(trip["arrival"].get("station_id"),
+                                   {}).get("name", "")
         dur = trip.get("duration", {})
         price_info = trip.get("price", {})
         legs = trip.get("legs", [])
 
         h = dur.get("hours", 0)
         m = dur.get("minutes", 0)
-        duration_str = f"{h}h {m}m" if h > 0 else f"{m}m" if (h or m) else "N/A"
+        duration_str = (f"{h}h {m}m" if h > 0 else
+                        f"{m}m" if (h or m) else "N/A")
 
         link = (f"https://shop.flixbus.com/search?departureCity={from_id}"
                 f"&arrivalCity={to_id}&rideDate={flix_date}"
@@ -108,7 +111,8 @@ def parse_trips(results, stations, from_id, to_id, flix_date):
             "departure_station": dep_station,
             "arrival_station": arr_station,
             "duration": duration_str,
-            "price": price_info.get("total_with_platform_fee") or price_info.get("total"),
+            "price": price_info.get("total_with_platform_fee") or
+            price_info.get("total"),
             "currency": "EUR",
             "transfers": max(len(legs) - 1, 0),
             "provider": "FlixBus",
@@ -143,7 +147,8 @@ def main():
     print(json.dumps({
         "success": True if trips else False,
         "trips": trips,
-        "error": None if trips else "No bus routes found or service unavailable",
+        "error": (None if trips else
+                  "No bus routes found or service unavailable"),
         "search_params": {"from": from_name, "to": to_name, "date": date}
     }))
 

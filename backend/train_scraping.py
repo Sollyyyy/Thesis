@@ -1,7 +1,6 @@
 import sys
 import json
 import requests
-from datetime import datetime
 
 
 HAFAS_URL = "https://fahrplan.oebb.at/bin/mgate.exe"
@@ -33,7 +32,8 @@ def search_journeys(from_city, to_city, date):
     }
     try:
         resp = requests.post(HAFAS_URL, json=payload, timeout=15,
-                             headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json"})
+                             headers={"User-Agent": "Mozilla/5.0",
+                                      "Content-Type": "application/json"})
         resp.raise_for_status()
         data = resp.json()
         svc = data.get("svcResL", [{}])[0]
@@ -57,8 +57,10 @@ def parse_journeys(res):
         arr_time = arr.get("aTimeS", "")
         trip_date = trip.get("date", "")
 
-        dep_loc = locations[dep.get("locX", 0)]["name"] if dep.get("locX", 0) < len(locations) else ""
-        arr_loc = locations[arr.get("locX", 0)]["name"] if arr.get("locX", 0) < len(locations) else ""
+        dep_loc = (locations[dep.get("locX", 0)]["name"]
+                   if dep.get("locX", 0) < len(locations) else "")
+        arr_loc = (locations[arr.get("locX", 0)]["name"]
+                   if arr.get("locX", 0) < len(locations) else "")
 
         # Train names from journey sections
         trains = []
@@ -82,9 +84,13 @@ def parse_journeys(res):
         departure_iso = ""
         arrival_iso = ""
         if trip_date and dep_time:
-            departure_iso = f"{trip_date[:4]}-{trip_date[4:6]}-{trip_date[6:8]}T{dep_time[:2]}:{dep_time[2:4]}:00"
+            departure_iso = (f"{trip_date[:4]}-{trip_date[4:6]}-"
+                             f"{trip_date[6:8]}T{dep_time[:2]}:"
+                             f"{dep_time[2:4]}:00")
         if trip_date and arr_time:
-            arrival_iso = f"{trip_date[:4]}-{trip_date[4:6]}-{trip_date[6:8]}T{arr_time[:2]}:{arr_time[2:4]}:00"
+            arrival_iso = (f"{trip_date[:4]}-{trip_date[4:6]}-"
+                           f"{trip_date[6:8]}T{arr_time[:2]}:"
+                           f"{arr_time[2:4]}:00")
 
         # Booking link from tariff response
         trf = trip.get("trfRes", {})
@@ -113,7 +119,9 @@ def main():
     res = search_journeys(from_city, to_city, hafas_date)
 
     if not res:
-        print(json.dumps({"success": False, "error": "Train service temporarily unavailable. Please try again later."}))
+        print(json.dumps({"success": False, "error": "Train service"
+                          " temporarily unavailable."
+                          " Please try again later."}))
         return
 
     trips = parse_journeys(res)
