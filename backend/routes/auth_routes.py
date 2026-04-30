@@ -24,7 +24,8 @@ async def login(user: UserLogin):
     try:
         ph.verify(db_user["hashed_password"], user.password)
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401,
+                            detail="Invalid username or password")
     token = create_access_token({"sub": user.username,
                                  "role": db_user.get("role", "user")})
     return {"access_token": token, "token_type": "bearer"}

@@ -13,7 +13,8 @@ async def admin_get_users(admin: dict = Depends(require_admin)):
 @router.delete('/users/{username}')
 async def admin_delete_user(username: str, admin: dict = Depends(require_admin)):
     if username == admin["username"]:
-        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+        raise HTTPException(status_code=400,
+                            detail="Cannot delete your own account")
     target = get_user(username)
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
@@ -22,5 +23,6 @@ async def admin_delete_user(username: str, admin: dict = Depends(require_admin))
 
 
 @router.get('/history/{username}')
-async def admin_get_history(username: str, admin: dict = Depends(require_admin)):
+async def admin_get_history(username: str,
+                            admin: dict = Depends(require_admin)):
     return get_search_history(username)

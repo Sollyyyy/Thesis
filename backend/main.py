@@ -12,7 +12,8 @@ init_db()
 # Create default admin if not exists
 if not get_user('admin'):
     ph = PasswordHasher()
-    create_user('admin', 'admin@tripplanner.com', 'Admin', ph.hash('admin123'), 'admin')
+    create_user('admin', 'admin@tripplanner.com', 'Admin', ph.hash('admin123'),
+                'admin')
 
 app = FastAPI(
     title="Trip Planner API",

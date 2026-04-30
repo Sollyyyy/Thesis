@@ -15,7 +15,7 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
 
 
 @router.get('/airports')
-async def get_airports():
+async def get_available_airports():
     return AIRPORTS
 
 

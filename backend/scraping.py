@@ -46,11 +46,15 @@ def get_price_list(data):
 
         for option in flight.get('pricing_options', []):
             agent_ids = option.get('agent_ids', [])
-            agent_name = agent_map.get(agent_ids[0], "Unknown") if agent_ids else "Unknown"
+            agent_name = agent_map.get(agent_ids[0],
+                                       "Unknown") if agent_ids else "Unknown"
 
             try:
                 price = option['price']['amount']
-                link = 'https://www.skyscanner.net' + option['items'][0]['url']
+                url_path = option['items'][0]['url']
+                if not url_path or url_path == '/':
+                    continue
+                link = 'https://www.skyscanner.net' + url_path
             except (KeyError, IndexError):
                 continue
 
