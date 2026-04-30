@@ -1,0 +1,15 @@
+server:
+  secret_key: "cf1c7f5f8500ce42346b06f2abb815e18409f787e1e69c3209816e7daa241792"
+  algorithm: "HS256"
+  access_token_expire_minutes: 30
+
+database:
+  host: "127.0.0.1"
+  port: 3306
+  user: "tripplanner"
+  password: "tripplanner123"
+  name: "tripplanner"
+
+apis:
+  flight_api_key: "69f0e637276f54b7f4206a3f"
+  # 
